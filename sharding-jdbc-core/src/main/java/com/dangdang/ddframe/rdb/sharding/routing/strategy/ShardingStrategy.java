@@ -56,10 +56,12 @@ public class ShardingStrategy {
      * @param shardingValues 分片值集合
      * @return 分库后指向的数据源名称集合
      */
-    public Collection<String> doStaticSharding(final SQLType sqlType, final Collection<String> availableTargetNames, final Collection<ShardingValue<?>> shardingValues) {
+    public Collection<String> doStaticSharding(final SQLType sqlType, final Collection<String> availableTargetNames,
+            final Collection<ShardingValue<?>> shardingValues) {
         Collection<String> result = new TreeSet<>(String.CASE_INSENSITIVE_ORDER);
         if (shardingValues.isEmpty()) {
-            Preconditions.checkState(!isInsertMultiple(sqlType, availableTargetNames), "INSERT statement should contain sharding value.");
+            Preconditions.checkState(!isInsertMultiple(sqlType, availableTargetNames),
+                "INSERT statement should contain sharding value.");
             result.addAll(availableTargetNames);
         } else {
             result.addAll(doSharding(shardingValues, availableTargetNames));
@@ -105,7 +107,13 @@ public class ShardingStrategy {
         }
         throw new UnsupportedOperationException(shardingAlgorithm.getClass().getName());
     }
-    
+
+    /**
+     * 是否插入的多条
+     * @param sqlType SQL 类型
+     * @param availableTargetNames  可用的分片集合
+     * @return true
+     */
     private boolean isInsertMultiple(final SQLType sqlType, final Collection<String> availableTargetNames) {
         return SQLType.INSERT == sqlType && availableTargetNames.size() > 1;
     }

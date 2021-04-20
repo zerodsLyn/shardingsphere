@@ -141,6 +141,7 @@ public class PostgreSQLSelectParser extends AbstractSelectParser {
         getSelectStatement().setLimit(limit);
     }
     
+    @Override
     protected boolean hasDistinctOn() {
         return true;
     }

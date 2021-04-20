@@ -59,14 +59,26 @@ public abstract class AbstractBaseRouteSqlTest {
         dataSourceMap.put("ds_0", null);
         dataSourceMap.put("ds_1", null);
         DataSourceRule dataSourceRule = new DataSourceRule(dataSourceMap);
-        TableRule orderTableRule = TableRule.builder("order").actualTables(Lists.newArrayList("order_0", "order_1")).dataSourceRule(dataSourceRule).build();
-        TableRule orderItemTableRule = TableRule.builder("order_item").actualTables(Lists.newArrayList("order_item_0", "order_item_1")).dataSourceRule(dataSourceRule).build();
-        TableRule orderAttrTableRule = TableRule.builder("order_attr").actualTables(Lists.newArrayList("ds_0.order_attr_a", "ds_1.order_attr_b")).dataSourceRule(dataSourceRule)
+        TableRule orderTableRule = TableRule.builder("order")
+                .actualTables(Lists.newArrayList("order_0", "order_1"))
+                .dataSourceRule(dataSourceRule).build();
+
+        TableRule orderItemTableRule = TableRule.builder("order_item")
+                .actualTables(Lists.newArrayList("order_item_0", "order_item_1"))
+                .dataSourceRule(dataSourceRule).build();
+
+        TableRule orderAttrTableRule = TableRule.builder("order_attr")
+                .actualTables(Lists.newArrayList("ds_0.order_attr_a", "ds_1.order_attr_b"))
+                .dataSourceRule(dataSourceRule)
                 .tableShardingStrategy(new TableShardingStrategy("order_id", new OrderAttrShardingAlgorithm())).build();
-        shardingRule = ShardingRule.builder().dataSourceRule(dataSourceRule).tableRules(Lists.newArrayList(orderTableRule, orderItemTableRule, orderAttrTableRule))
+
+        shardingRule = ShardingRule.builder()
+                .dataSourceRule(dataSourceRule)
+                .tableRules(Lists.newArrayList(orderTableRule, orderItemTableRule, orderAttrTableRule))
                 .bindingTableRules(Collections.singletonList(new BindingTableRule(Arrays.asList(orderTableRule, orderItemTableRule))))
                 .databaseShardingStrategy(new DatabaseShardingStrategy("order_id", new OrderShardingAlgorithm()))
-                .tableShardingStrategy(new TableShardingStrategy("order_id", new OrderShardingAlgorithm())).build();
+                .tableShardingStrategy(new TableShardingStrategy("order_id", new OrderShardingAlgorithm()))
+                .build();
     }
     
     protected void assertSingleTargetWithoutParameter(final String originSql, final String targetDataSource, final String targetSQL) {

@@ -35,7 +35,10 @@ public final class HintManagerHolder {
     public static final String DB_TABLE_NAME = "DB_TABLE_NAME";
     
     public static final String DB_COLUMN_NAME = "DB_COLUMN_NAME";
-    
+
+    /**
+     * 使用threadLocal来管理
+     */
     private static final ThreadLocal<HintManager> HINT_MANAGER_HOLDER = new ThreadLocal<>();
     
     /**

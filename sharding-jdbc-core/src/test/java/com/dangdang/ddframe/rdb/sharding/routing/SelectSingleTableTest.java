@@ -40,8 +40,17 @@ public final class SelectSingleTableTest extends AbstractDynamicRouteSqlTest {
     
     @Test
     public void assertSingleSelect() {
-        assertSingleTargetWithoutParameter("select * from order where order_id = 1", "ds_1", "select * from order_1 where order_id = 1");
-        assertSingleTargetWithoutParameter(Collections.singletonList(new ShardingValuePair("order", 1)), "select * from order", "ds_1", "select * from order_1");
+        assertSingleTargetWithoutParameter(
+            "select * from order where order_id = 1",
+            "ds_1",
+            "select * from order_1 where order_id = 1"
+        );
+        assertSingleTargetWithoutParameter(
+            Collections.singletonList(new ShardingValuePair("order", 1)),
+            "select * from order",
+            "ds_1",
+            "select * from order_1"
+        );
         assertSingleTargetWithoutParameter(Collections.singletonList(new ShardingValuePair("order", 2)), "select * from order", "ds_0", "select * from order_0");
         assertSingleTargetWithParameters("select * from order where order_id = ?", Collections.<Object>singletonList(2), "ds_0", "select * from order_0 where order_id = ?");
     }

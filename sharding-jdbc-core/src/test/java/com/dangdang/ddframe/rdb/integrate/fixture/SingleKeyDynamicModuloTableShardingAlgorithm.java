@@ -27,7 +27,10 @@ import java.util.LinkedHashSet;
 
 @RequiredArgsConstructor
 public final class SingleKeyDynamicModuloTableShardingAlgorithm implements SingleKeyTableShardingAlgorithm<Integer> {
-    
+
+    /**
+     * 表名的前缀
+     */
     private final String tablePrefix;
     
     @Override

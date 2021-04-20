@@ -37,9 +37,15 @@ public class Lexer {
     private final String input;
     
     private final Dictionary dictionary;
-    
+
+    /**
+     * 解析到 SQL 的 offset
+     */
     private int offset;
-    
+
+    /**
+     * 当前 词法标记
+     */
     @Getter
     private Token currentToken;
     
@@ -69,13 +75,19 @@ public class Lexer {
         }
         offset = currentToken.getEndPosition();
     }
-    
+
+    /**
+     * 跳过忽略的词法标记
+     */
     private void skipIgnoredToken() {
+        // 空格
         offset = new Tokenizer(input, dictionary, offset).skipWhitespace();
+        // SQL Hint
         while (isHintBegin()) {
             offset = new Tokenizer(input, dictionary, offset).skipHint();
             offset = new Tokenizer(input, dictionary, offset).skipWhitespace();
         }
+        // SQL 注释
         while (isCommentBegin()) {
             offset = new Tokenizer(input, dictionary, offset).skipComment();
             offset = new Tokenizer(input, dictionary, offset).skipWhitespace();
@@ -115,10 +127,27 @@ public class Lexer {
     private boolean isHexDecimalBegin() {
         return '0' == getCurrentChar(0) && 'x' == getCurrentChar(1);
     }
-    
+
+    /**
+     * 是否是 数字
+     * '-' 需要特殊处理。".2" 被处理成省略0的小数，"-.2" 不能被处理成省略的小数，否则会出问题。
+     * 例如说，"SELECT a-.2" 处理的结果是 "SELECT" / "a" / "-" / ".2"
+     *
+     * @return
+     */
     private boolean isNumberBegin() {
-        return CharType.isDigital(getCurrentChar(0)) || ('.' == getCurrentChar(0) && CharType.isDigital(getCurrentChar(1)) && !isIdentifierBegin(getCurrentChar(-1))
-                || ('-' == getCurrentChar(0) && ('.' == getCurrentChar(0) || CharType.isDigital(getCurrentChar(1)))));
+        return CharType.isDigital(getCurrentChar(0)) ||
+            ('.' == getCurrentChar(0)
+                && CharType.isDigital(getCurrentChar(1))
+                && !isIdentifierBegin(getCurrentChar(-1))
+                ||
+                (
+                    '-' == getCurrentChar(0)
+                        && (
+                                '.' == getCurrentChar(0) || CharType.isDigital(getCurrentChar(1))
+                            )
+                )
+            );
     }
     
     private boolean isSymbolBegin() {

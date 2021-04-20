@@ -65,7 +65,8 @@ public final class SimpleRoutingEngine implements RoutingEngine {
     
     private Collection<String> routeDataSources(final TableRule tableRule) {
         DatabaseShardingStrategy strategy = shardingRule.getDatabaseShardingStrategy(tableRule);
-        List<ShardingValue<?>> shardingValues = HintManagerHolder.isUseShardingHint() ? getDatabaseShardingValuesFromHint(strategy.getShardingColumns())
+        List<ShardingValue<?>> shardingValues = HintManagerHolder.isUseShardingHint()
+                ? getDatabaseShardingValuesFromHint(strategy.getShardingColumns())
                 : getShardingValues(strategy.getShardingColumns());
         Collection<String> result = strategy.doStaticSharding(sqlStatement.getType(), tableRule.getActualDatasourceNames(), shardingValues);
         Preconditions.checkState(!result.isEmpty(), "no database route info");

@@ -85,8 +85,12 @@ public abstract class AbstractSelectParser implements SQLStatementParser {
     
     protected void customizedSelect() {
     }
-    
+
+    /**
+     * 定义一个查询的模板
+     */
     protected void query() {
+        // 以SELECT关键字开始
         sqlParser.accept(DefaultKeyword.SELECT);
         parseDistinct();
         parseSelectList();
@@ -99,7 +103,9 @@ public abstract class AbstractSelectParser implements SQLStatementParser {
     protected final void parseDistinct() {
         if (sqlParser.equalAny(DefaultKeyword.DISTINCT, DefaultKeyword.DISTINCTROW, DefaultKeyword.UNION)) {
             selectStatement.setDistinct(true);
+
             sqlParser.getLexer().nextToken();
+
             if (hasDistinctOn() && sqlParser.equalAny(DefaultKeyword.ON)) {
                 sqlParser.getLexer().nextToken();
                 sqlParser.skipParentheses();
@@ -121,23 +127,32 @@ public abstract class AbstractSelectParser implements SQLStatementParser {
     }
     
     private void parseSelectItem() {
+        // MySQL会返回false
         if (isRowNumberSelectItem()) {
             selectStatement.getItems().add(parseRowNumberSelectItem());
             return;
         }
+
         sqlParser.skipIfEqual(DefaultKeyword.CONNECT_BY_ROOT);
         String literals = sqlParser.getLexer().getCurrentToken().getLiterals();
+        // SELECT有*号
         if (isStarSelectItem(literals)) {
             selectStatement.getItems().add(parseStarSelectItem());
             return;
         }
+        // SELECT有聚合
         if (isAggregationSelectItem()) {
             selectStatement.getItems().add(parseAggregationSelectItem(literals));
             return;
         }
+
+        // 非*非聚合通用
         StringBuilder expression = new StringBuilder();
         Token lastToken = null;
-        while (!sqlParser.equalAny(DefaultKeyword.AS) && !sqlParser.equalAny(Symbol.COMMA) && !sqlParser.equalAny(DefaultKeyword.FROM) && !sqlParser.equalAny(Assist.END)) {
+        while (!sqlParser.equalAny(DefaultKeyword.AS)
+                && !sqlParser.equalAny(Symbol.COMMA)
+                && !sqlParser.equalAny(DefaultKeyword.FROM)
+                && !sqlParser.equalAny(Assist.END)) {
             String value = sqlParser.getLexer().getCurrentToken().getLiterals();
             int position = sqlParser.getLexer().getCurrentToken().getEndPosition() - value.length();
             expression.append(value);
@@ -147,6 +162,7 @@ public abstract class AbstractSelectParser implements SQLStatementParser {
                 selectStatement.getSqlTokens().add(new TableToken(position, value));
             }
         }
+
         if (hasAlias(expression, lastToken)) {
             selectStatement.getItems().add(parseSelectItemWithAlias(expression, lastToken));
             return;
@@ -181,7 +197,10 @@ public abstract class AbstractSelectParser implements SQLStatementParser {
     }
     
     private boolean hasAlias(final StringBuilder expression, final Token lastToken) {
-        return null != lastToken && Literals.IDENTIFIER == lastToken.getType() && !isSQLPropertyExpression(expression, lastToken) && !expression.toString().equals(lastToken.getLiterals());
+        return null != lastToken
+                && Literals.IDENTIFIER == lastToken.getType()
+                && !isSQLPropertyExpression(expression, lastToken)
+                && !expression.toString().equals(lastToken.getLiterals());
     }
     
     private boolean isSQLPropertyExpression(final StringBuilder expression, final Token lastToken) {

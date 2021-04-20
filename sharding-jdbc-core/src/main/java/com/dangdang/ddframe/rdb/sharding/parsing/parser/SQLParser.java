@@ -87,14 +87,19 @@ public class SQLParser extends AbstractParser {
      */
     // TODO 完善Expression解析的各种场景
     public final SQLExpression parseExpression() {
+        // 解析表达式
         String literals = getLexer().getCurrentToken().getLiterals();
         final SQLExpression expression = getExpression(literals);
+
+        // SQLIdentifierExpression 需要特殊处理。考虑自定义函数，表名.属性情况。
         if (skipIfEqual(Literals.IDENTIFIER)) {
             if (skipIfEqual(Symbol.DOT)) {
                 String property = getLexer().getCurrentToken().getLiterals();
                 getLexer().nextToken();
                 return skipIfCompositeExpression() ? new SQLIgnoreExpression() : new SQLPropertyExpression(new SQLIdentifierExpression(literals), property);
             }
+
+            // 例如，GROUP BY DATE(create_time) 中的 "DATE(create_time)"
             if (equalAny(Symbol.LEFT_PAREN)) {
                 skipParentheses();
                 skipRestCompositeExpression();
@@ -130,7 +135,8 @@ public class SQLParser extends AbstractParser {
     }
     
     private boolean skipIfCompositeExpression() {
-        if (equalAny(Symbol.PLUS, Symbol.SUB, Symbol.STAR, Symbol.SLASH, Symbol.PERCENT, Symbol.AMP, Symbol.BAR, Symbol.DOUBLE_AMP, Symbol.DOUBLE_BAR, Symbol.CARET, Symbol.DOT, Symbol.LEFT_PAREN)) {
+        if (equalAny(Symbol.PLUS, Symbol.SUB, Symbol.STAR, Symbol.SLASH, Symbol.PERCENT, Symbol.AMP, Symbol.BAR,
+                Symbol.DOUBLE_AMP, Symbol.DOUBLE_BAR, Symbol.CARET, Symbol.DOT, Symbol.LEFT_PAREN)) {
             skipParentheses();
             skipRestCompositeExpression();
             return true;
@@ -170,7 +176,8 @@ public class SQLParser extends AbstractParser {
             return Optional.of(result);
         }
         // TODO 增加哪些数据库识别哪些关键字作为别名的配置
-        if (equalAny(Literals.IDENTIFIER, Literals.CHARS, DefaultKeyword.USER, DefaultKeyword.END, DefaultKeyword.CASE, DefaultKeyword.KEY, DefaultKeyword.INTERVAL, DefaultKeyword.CONSTRAINT)) {
+        if (equalAny(Literals.IDENTIFIER, Literals.CHARS, DefaultKeyword.USER, DefaultKeyword.END,
+                DefaultKeyword.CASE, DefaultKeyword.KEY, DefaultKeyword.INTERVAL, DefaultKeyword.CONSTRAINT)) {
             String result = SQLUtil.getExactlyValue(getLexer().getCurrentToken().getLiterals());
             getLexer().nextToken();
             return Optional.of(result);
@@ -207,6 +214,7 @@ public class SQLParser extends AbstractParser {
             }
             table = new Table(SQLUtil.getExactlyValue(literals), parseAlias());
         }
+        // multiple-update 或者 multiple-delete
         if (skipJoin()) {
             throw new UnsupportedOperationException("Cannot support Multiple-Table.");
         }

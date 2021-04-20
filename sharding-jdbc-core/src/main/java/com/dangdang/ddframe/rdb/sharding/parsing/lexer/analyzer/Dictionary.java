@@ -36,7 +36,11 @@ public final class Dictionary {
     public Dictionary(final Keyword... dialectKeywords) {
         fill(dialectKeywords);
     }
-    
+
+    /**
+     * 填如所有的关键词
+     * @param dialectKeywords 数据库类型相关的关键字
+     */
     private void fill(final Keyword... dialectKeywords) {
         for (DefaultKeyword each : DefaultKeyword.values()) {
             tokens.put(each.name(), each);

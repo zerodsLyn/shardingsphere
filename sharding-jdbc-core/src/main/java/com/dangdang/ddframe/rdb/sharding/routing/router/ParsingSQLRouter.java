@@ -69,13 +69,18 @@ public final class ParsingSQLRouter implements SQLRouter {
     
     @Override
     public SQLStatement parse(final String logicSQL, final int parametersSize) {
+        // 获取SQL解析引擎，解析SQL语句
         SQLParsingEngine parsingEngine = new SQLParsingEngine(databaseType, logicSQL, shardingRule);
+
         Context context = MetricsContext.start("Parse SQL");
+
         SQLStatement result = parsingEngine.parse();
         if (result instanceof InsertStatement) {
             ((InsertStatement) result).appendGenerateKeyToken(shardingRule, parametersSize);
         }
+
         MetricsContext.stop(context);
+
         return result;
     }
     
@@ -86,6 +91,7 @@ public final class ParsingSQLRouter implements SQLRouter {
         if (sqlStatement instanceof InsertStatement && null != ((InsertStatement) sqlStatement).getGeneratedKey()) {
             processGeneratedKey(parameters, (InsertStatement) sqlStatement, result);
         }
+
         RoutingResult routingResult = route(parameters, sqlStatement);
         SQLRewriteEngine rewriteEngine = new SQLRewriteEngine(shardingRule, logicSQL, sqlStatement);
         boolean isSingleRouting = routingResult.isSingleRouting();

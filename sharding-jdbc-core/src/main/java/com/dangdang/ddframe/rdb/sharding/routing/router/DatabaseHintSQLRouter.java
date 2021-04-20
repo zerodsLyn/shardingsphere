@@ -57,11 +57,21 @@ public final class DatabaseHintSQLRouter implements SQLRouter {
     // TODO insert的SQL仍然需要解析自增主键
     public SQLRouteResult route(final String logicSQL, final List<Object> parameters, final SQLStatement sqlStatement) {
         Context context = MetricsContext.start("Route SQL");
+
         SQLRouteResult result = new SQLRouteResult(sqlStatement);
-        RoutingResult routingResult = new DatabaseHintRoutingEngine(shardingRule.getDataSourceRule(), shardingRule.getDatabaseShardingStrategy(), sqlStatement.getType()).route();
+
+        // 路由
+        RoutingResult routingResult = new DatabaseHintRoutingEngine(
+            shardingRule.getDataSourceRule(),
+            shardingRule.getDatabaseShardingStrategy(),
+            sqlStatement.getType()
+        ).route();
+
+
         for (TableUnit each : routingResult.getTableUnits().getTableUnits()) {
             result.getExecutionUnits().add(new SQLExecutionUnit(each.getDataSourceName(), logicSQL));
         }
+
         MetricsContext.stop(context);
         if (showSQL) {
             SQLLogger.logSQL(logicSQL, sqlStatement, result.getExecutionUnits(), parameters);

@@ -40,19 +40,38 @@ public class MySQLSelectParser extends AbstractSelectParser {
     
     @Override
     public void query() {
+        // 获取当前SELECT
         if (getSqlParser().equalAny(DefaultKeyword.SELECT)) {
             getSqlParser().getLexer().nextToken();
+
+            // 解析 DISTINCT、DISTINCTROW、UNION 谓语
             parseDistinct();
+
             getSqlParser().skipAll(MySQLKeyword.HIGH_PRIORITY, DefaultKeyword.STRAIGHT_JOIN, MySQLKeyword.SQL_SMALL_RESULT, MySQLKeyword.SQL_BIG_RESULT, MySQLKeyword.SQL_BUFFER_RESULT,
                     MySQLKeyword.SQL_CACHE, MySQLKeyword.SQL_NO_CACHE, MySQLKeyword.SQL_CALC_FOUND_ROWS);
+
+            // 解析 查询字段
             parseSelectList();
+
+            // 跳到 FROM 处
             skipToFrom();
         }
+        // 解析 表（JOIN ON / FROM 单&多表）
         parseFrom();
+
+        // 解析 WHERE 条件
         parseWhere();
+
+        // 解析 Group By 和 Having（目前不支持）条件
         parseGroupBy();
+
+        // 解析 Order By 条件
         parseOrderBy();
+
+        // 解析 分页 Limit 条件
         parseLimit();
+
+        // [PROCEDURE] 暂不支持
         if (getSqlParser().equalAny(DefaultKeyword.PROCEDURE)) {
             throw new SQLParsingUnsupportedException(getSqlParser().getLexer().getCurrentToken().getType());
         }

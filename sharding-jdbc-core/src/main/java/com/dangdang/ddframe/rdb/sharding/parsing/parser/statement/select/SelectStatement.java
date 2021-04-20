@@ -41,21 +41,47 @@ import java.util.Map;
 @Setter
 @ToString(callSuper = true)
 public final class SelectStatement extends AbstractSQLStatement {
-    
+
+    /**
+     * 是否行 DISTINCT / DISTINCTROW / UNION
+     */
     private boolean distinct;
-    
+
+    /**
+     * 是否查询所有字段，即 SELECT *
+     */
     private boolean containStar;
-    
+
+    /**
+     * 最后一个查询项下一个 Token 的开始位置
+     *
+     * @see #items
+     */
     private int selectListLastPosition;
-    
+
+    /**
+     * 最后一个分组项下一个 Token 的开始位置
+     */
     private int groupByLastPosition;
-    
+
+    /**
+     * 查询项
+     */
     private final List<SelectItem> items = new LinkedList<>();
-    
+
+    /**
+     * 分组项
+     */
     private final List<OrderItem> groupByItems = new LinkedList<>();
-    
+
+    /**
+     * 排序项
+     */
     private final List<OrderItem> orderByItems = new LinkedList<>();
-    
+
+    /**
+     * 分页
+     */
     private Limit limit;
     
     public SelectStatement() {
