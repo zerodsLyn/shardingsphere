@@ -79,6 +79,7 @@ public final class Tables {
      * @return 表名称集合
      */
     public Collection<String> getTableNames() {
+        // 忽略大小写
         Collection<String> result = new TreeSet<>(String.CASE_INSENSITIVE_ORDER);
         for (Table each : tables) {
             result.add(each.getName());

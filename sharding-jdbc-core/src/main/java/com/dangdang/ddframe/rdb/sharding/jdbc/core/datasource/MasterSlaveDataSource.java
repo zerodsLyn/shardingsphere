@@ -38,7 +38,10 @@ import java.util.List;
  */
 @RequiredArgsConstructor
 public final class MasterSlaveDataSource extends AbstractDataSourceAdapter {
-    
+
+    /**
+     * 当前线程是否是 DML 操作标识
+     */
     private static final ThreadLocal<Boolean> DML_FLAG = new ThreadLocal<Boolean>() {
         
         @Override
@@ -46,13 +49,25 @@ public final class MasterSlaveDataSource extends AbstractDataSourceAdapter {
             return false;
         }
     };
-    
+
+    /**
+     * 数据源名称
+     */
     private final String name;
-    
+
+    /**
+     * 主库数据源
+     */
     private final DataSource masterDataSource;
-    
+
+    /**
+     * 从库数据源
+     */
     private final List<DataSource> slaveDataSources;
-    
+
+    /**
+     * 从库负载均衡策略
+     */
     private final SlaveLoadBalanceStrategy slaveLoadBalanceStrategy = new RoundRobinSlaveLoadBalanceStrategy();
     
     /**
@@ -67,6 +82,7 @@ public final class MasterSlaveDataSource extends AbstractDataSourceAdapter {
     }
     
     private static boolean isMasterRoute(final SQLType sqlType) {
+        // 如果是增删改 或者 DML线程不为空 或者
         return SQLType.SELECT != sqlType || DML_FLAG.get() || HintManagerHolder.isMasterRouteOnly();
     }
     
@@ -85,6 +101,7 @@ public final class MasterSlaveDataSource extends AbstractDataSourceAdapter {
      * @return 主或从节点的数据源
      */
     public DataSource getDataSource(final SQLType sqlType) {
+        // 如果只走主库
         if (isMasterRoute(sqlType)) {
             DML_FLAG.set(true);
             return masterDataSource;

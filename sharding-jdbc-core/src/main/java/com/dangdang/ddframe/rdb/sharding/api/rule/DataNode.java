@@ -27,6 +27,7 @@ import java.util.List;
 
 /**
  * 分库分表数据单元.
+ * 静态分库分表数据单元 = 数据源名称 + 表名称
  * 
  * @author zhangliang
  */

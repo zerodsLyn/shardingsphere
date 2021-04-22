@@ -71,8 +71,11 @@ public abstract class AbstractInsertParser implements SQLStatementParser {
     
     @Override
     public final InsertStatement parse() {
+        // 跳过 INSERT 关键字
         sqlParser.getLexer().nextToken();
+        // 跳过into
         parseInto();
+        // 解析column
         parseColumns();
         if (sqlParser.equalAny(DefaultKeyword.SELECT, Symbol.LEFT_PAREN)) {
             throw new UnsupportedOperationException("Cannot support subquery");
@@ -82,6 +85,7 @@ public abstract class AbstractInsertParser implements SQLStatementParser {
         } else if (getCustomizedInsertKeywords().contains(sqlParser.getLexer().getCurrentToken().getType())) {
             parseCustomizedInsert();
         }
+        // 自增主键
         appendGenerateKey();
         return insertStatement;
     }

@@ -65,7 +65,7 @@ public final class SelectStatement extends AbstractSQLStatement {
     private int groupByLastPosition;
 
     /**
-     * 查询项
+     * 查询项 *
      */
     private final List<SelectItem> items = new LinkedList<>();
 

@@ -52,7 +52,8 @@ public final class ShardingStrategyTest {
     @Test
     public void assertDoStaticShardingForEqualSingleKey() {
         ShardingStrategy strategy = new ShardingStrategy("column", new TestSingleKeyShardingAlgorithm());
-        assertThat(strategy.doStaticSharding(SQLType.SELECT, targets, createShardingValues(new ShardingValue<>("logicTable", "column", "1"))), 
+        assertThat(strategy.doStaticSharding(SQLType.SELECT, targets,
+            createShardingValues(new ShardingValue<>("logicTable", "column", "1"))),
                 is((Collection<String>) Sets.newHashSet("1")));
     }
     

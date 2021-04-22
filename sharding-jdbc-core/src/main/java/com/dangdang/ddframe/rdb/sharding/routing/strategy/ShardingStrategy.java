@@ -32,10 +32,16 @@ import java.util.TreeSet;
  * @author zhangliang
  */
 public class ShardingStrategy {
-    
+
+    /**
+     * sharding的列
+     */
     @Getter
     private final Collection<String> shardingColumns;
-    
+
+    /**
+     * sharding算法
+     */
     private final ShardingAlgorithm shardingAlgorithm;
     
     public ShardingStrategy(final String shardingColumn, final ShardingAlgorithm shardingAlgorithm) {
@@ -85,9 +91,12 @@ public class ShardingStrategy {
     
     @SuppressWarnings({ "unchecked", "rawtypes" })
     private Collection<String> doSharding(final Collection<ShardingValue<?>> shardingValues, final Collection<String> availableTargetNames) {
+        // 无片键
         if (shardingAlgorithm instanceof NoneKeyShardingAlgorithm) {
             return Collections.singletonList(((NoneKeyShardingAlgorithm) shardingAlgorithm).doSharding(availableTargetNames, shardingValues.iterator().next()));
         }
+
+        // 单片
         if (shardingAlgorithm instanceof SingleKeyShardingAlgorithm) {
             SingleKeyShardingAlgorithm<?> singleKeyShardingAlgorithm = (SingleKeyShardingAlgorithm<?>) shardingAlgorithm;
             ShardingValue shardingValue = shardingValues.iterator().next();
@@ -102,6 +111,8 @@ public class ShardingStrategy {
                     throw new UnsupportedOperationException(shardingValue.getType().getClass().getName());
             }
         }
+
+        // 多片
         if (shardingAlgorithm instanceof MultipleKeysShardingAlgorithm) {
             return ((MultipleKeysShardingAlgorithm) shardingAlgorithm).doSharding(availableTargetNames, shardingValues);
         }

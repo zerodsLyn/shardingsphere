@@ -51,7 +51,10 @@ import java.util.Objects;
  * @author zhangliang
  */
 public abstract class AbstractPreparedStatementAdapter extends AbstractUnsupportedOperationPreparedStatement {
-    
+
+    /**
+     * 记录的设置参数方法数组
+     */
     private final List<SetParameterMethodInvocation> setParameterMethodInvocations = new LinkedList<>();
     
     @Getter
@@ -294,7 +297,13 @@ public abstract class AbstractPreparedStatementAdapter extends AbstractUnsupport
         setParameter(parameterIndex, x);
         recordSetParameter("setObject", new Class[]{int.class, Object.class, int.class, int.class}, parameterIndex, x, targetSqlType, scaleOrLength);
     }
-    
+
+    /**
+     * 记录占位符参数
+     *
+     * @param parameterIndex 占位符参数位置
+     * @param value 参数
+     */
     private void setParameter(final int parameterIndex, final Object value) {
         if (parameters.size() == parameterIndex - 1) {
             parameters.add(value);
@@ -305,7 +314,14 @@ public abstract class AbstractPreparedStatementAdapter extends AbstractUnsupport
         }
         parameters.set(parameterIndex - 1, value);
     }
-    
+
+    /**
+     * 记录设置参数方法调用
+     *
+     * @param methodName 方法名，例如 setInt、setLong 等
+     * @param argumentTypes 参数类型
+     * @param arguments 参数
+     */
     private void recordSetParameter(final String methodName, final Class[] argumentTypes, final Object... arguments) {
         try {
             setParameterMethodInvocations.add(new SetParameterMethodInvocation(PreparedStatement.class.getMethod(methodName, argumentTypes), arguments, arguments[1]));
@@ -321,7 +337,12 @@ public abstract class AbstractPreparedStatementAdapter extends AbstractUnsupport
             throw new ShardingJdbcException(ex);
         }
     }
-    
+
+    /**
+     * 回放记录的设置参数方法调用
+     *
+     * @param preparedStatement 预编译语句对象
+     */
     protected void replaySetParameter(final PreparedStatement preparedStatement) {
         addParameters();
         for (SetParameterMethodInvocation each : setParameterMethodInvocations) {
@@ -329,7 +350,10 @@ public abstract class AbstractPreparedStatementAdapter extends AbstractUnsupport
             each.invoke(preparedStatement);
         }
     }
-    
+
+    /**
+     * 当使用分布式主键时，生成后会添加到 parameters，此时 parameters 数量多于 setParameterMethodInvocations，需要生成该分布式主键的 SetParameterMethodInvocation
+     */
     private void addParameters() {
         for (int i = setParameterMethodInvocations.size(); i < parameters.size(); i++) {
             recordSetParameter("setObject", new Class[]{int.class, Object.class}, i + 1, parameters.get(i));

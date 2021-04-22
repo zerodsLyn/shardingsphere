@@ -66,6 +66,7 @@ public class WrapperAdapter implements Wrapper {
     
     /**
      * 回放记录的方法调用.
+     * 例如：当它无数据库连接时，先记录；等获得到数据连接后，再回放
      * 
      * @param target 目标对象
      */
@@ -74,11 +75,15 @@ public class WrapperAdapter implements Wrapper {
             each.invoke(target);
         }
     }
-    
+
+
     protected void throwSQLExceptionIfNecessary(final Collection<SQLException> exceptions) throws SQLException {
+        // 为空不抛出异常
         if (exceptions.isEmpty()) {
             return;
         }
+
+        // 异常链
         SQLException ex = new SQLException();
         for (SQLException each : exceptions) {
             ex.setNextException(each);

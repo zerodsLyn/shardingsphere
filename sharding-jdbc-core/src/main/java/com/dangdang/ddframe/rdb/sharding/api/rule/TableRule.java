@@ -40,9 +40,13 @@ import java.util.List;
 @Getter
 @ToString
 public final class TableRule {
-    
+
+    /**
+     * 逻辑表名
+     */
     private final String logicTable;
-    
+
+
     private final boolean dynamic;
     
     private final List<DataNode> actualTables;
@@ -82,13 +86,16 @@ public final class TableRule {
         this.dynamic = dynamic;
         this.databaseShardingStrategy = databaseShardingStrategy;
         this.tableShardingStrategy = tableShardingStrategy;
+        // 动态表的分库分表数据单元
         if (dynamic) {
             Preconditions.checkNotNull(dataSourceRule);
             this.actualTables = generateDataNodes(dataSourceRule);
         } else if (null == actualTables || actualTables.isEmpty()) {
+            // 静态表的分库分表数据单元
             Preconditions.checkNotNull(dataSourceRule);
             this.actualTables = generateDataNodes(Collections.singletonList(logicTable), dataSourceRule, dataSourceNames);
         } else {
+            // 静态表的分库分表数据单元
             this.actualTables = generateDataNodes(actualTables, dataSourceRule, dataSourceNames);
         }
         this.generateKeyColumn = generateKeyColumn;
@@ -118,6 +125,7 @@ public final class TableRule {
         Collection<String> dataSourceNames = getDataSourceNames(dataSourceRule, actualDataSourceNames);
         List<DataNode> result = new ArrayList<>(actualTables.size() * (dataSourceNames.isEmpty() ? 1 : dataSourceNames.size()));
         for (String actualTable : actualTables) {
+            // 当 actualTable 为 ${dataSourceName}.${tableName} 时
             if (DataNode.isValidDataNode(actualTable)) {
                 result.add(new DataNode(actualTable));
             } else {
@@ -128,7 +136,14 @@ public final class TableRule {
         }
         return result;
     }
-    
+
+    /**
+     * 根据 数据源配置对象 和 数据源名集合 获得 最终的数据源名集合
+     *
+     * @param dataSourceRule 数据源配置对象
+     * @param actualDataSourceNames 数据源名集合
+     * @return 最终的数据源名集合
+     */
     private Collection<String> getDataSourceNames(final DataSourceRule dataSourceRule, final Collection<String> actualDataSourceNames) {
         if (null == dataSourceRule) {
             return Collections.emptyList();

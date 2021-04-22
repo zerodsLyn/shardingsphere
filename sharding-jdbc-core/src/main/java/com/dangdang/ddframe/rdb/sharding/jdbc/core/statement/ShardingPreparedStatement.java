@@ -81,11 +81,25 @@ public final class ShardingPreparedStatement extends AbstractPreparedStatementAd
     public ResultSet executeQuery() throws SQLException {
         ResultSet result;
         try {
+            // 路由
             Collection<PreparedStatementUnit> preparedStatementUnits = route();
+
+            // 执行
             List<ResultSet> resultSets = new PreparedStatementExecutor(
-                    getShardingConnection().getShardingContext().getExecutorEngine(), getRouteResult().getSqlStatement().getType(), preparedStatementUnits, getParameters()).executeQuery();
-            result = new ShardingResultSet(resultSets, new MergeEngine(
-                    getShardingConnection().getShardingContext().getDatabaseType(), resultSets, (SelectStatement) getRouteResult().getSqlStatement()).merge());
+                    getShardingConnection().getShardingContext().getExecutorEngine(),
+                    getRouteResult().getSqlStatement().getType(),
+                    preparedStatementUnits,
+                    getParameters()
+            ).executeQuery();
+
+            // 合并
+            result = new ShardingResultSet(resultSets,
+                new MergeEngine(
+                    getShardingConnection().getShardingContext().getDatabaseType(),
+                    resultSets,
+                    (SelectStatement) getRouteResult().getSqlStatement()
+                ).merge()
+            );
         } finally {
             clearBatch();
         }
@@ -98,7 +112,10 @@ public final class ShardingPreparedStatement extends AbstractPreparedStatementAd
         try {
             Collection<PreparedStatementUnit> preparedStatementUnits = route();
             return new PreparedStatementExecutor(
-                    getShardingConnection().getShardingContext().getExecutorEngine(), getRouteResult().getSqlStatement().getType(), preparedStatementUnits, getParameters()).executeUpdate();
+                    getShardingConnection().getShardingContext().getExecutorEngine(),
+                    getRouteResult().getSqlStatement().getType(), preparedStatementUnits,
+                    getParameters()
+            ).executeUpdate();
         } finally {
             clearBatch();
         }
@@ -117,9 +134,12 @@ public final class ShardingPreparedStatement extends AbstractPreparedStatementAd
     
     private Collection<PreparedStatementUnit> route() throws SQLException {
         Collection<PreparedStatementUnit> result = new LinkedList<>();
+        // 路由
         setRouteResult(routingEngine.route(getParameters()));
+        // 遍历 SQL 执行单元
         for (SQLExecutionUnit each : getRouteResult().getExecutionUnits()) {
             PreparedStatement preparedStatement = generatePreparedStatement(each);
+
             getRoutedStatements().add(preparedStatement);
             replaySetParameter(preparedStatement);
             result.add(new PreparedStatementUnit(each, preparedStatement));
@@ -129,11 +149,17 @@ public final class ShardingPreparedStatement extends AbstractPreparedStatementAd
     
     private PreparedStatement generatePreparedStatement(final SQLExecutionUnit sqlExecutionUnit) throws SQLException {
         Optional<GeneratedKey> generatedKey = getGeneratedKey();
-        Connection connection = getShardingConnection().getConnection(sqlExecutionUnit.getDataSource(), getRouteResult().getSqlStatement().getType());
+        Connection connection = getShardingConnection()
+            .getConnection(sqlExecutionUnit.getDataSource(), getRouteResult().getSqlStatement().getType());
         if (isReturnGeneratedKeys() && generatedKey.isPresent()) {
             return connection.prepareStatement(sqlExecutionUnit.getSql(), RETURN_GENERATED_KEYS);
         }
-        return connection.prepareStatement(sqlExecutionUnit.getSql(), getResultSetType(), getResultSetConcurrency(), getResultSetHoldability());
+        return connection.prepareStatement(
+            sqlExecutionUnit.getSql(),
+            getResultSetType(),
+            getResultSetConcurrency(),
+            getResultSetHoldability()
+        );
     }
     
     @Override

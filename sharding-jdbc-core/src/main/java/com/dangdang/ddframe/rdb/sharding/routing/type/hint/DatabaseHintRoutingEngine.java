@@ -53,13 +53,21 @@ public final class DatabaseHintRoutingEngine implements RoutingEngine {
     @Override
     public RoutingResult route() {
         Optional<ShardingValue<?>> shardingValue = HintManagerHolder.getDatabaseShardingValue(
-            new ShardingKey(HintManagerHolder.DB_TABLE_NAME, HintManagerHolder.DB_COLUMN_NAME));
+            new ShardingKey(
+                HintManagerHolder.DB_TABLE_NAME,
+                HintManagerHolder.DB_COLUMN_NAME
+            )
+        );
+
         Preconditions.checkState(shardingValue.isPresent());
         log.debug("Before database sharding only db:{} sharding values: {}", dataSourceRule.getDataSourceNames(), shardingValue.get());
+
         Collection<String> routingDataSources = databaseShardingStrategy.doStaticSharding(
             sqlType, dataSourceRule.getDataSourceNames(), Collections.<ShardingValue<?>>singleton(shardingValue.get()));
+
         Preconditions.checkState(!routingDataSources.isEmpty(), "no database route info");
         log.debug("After database sharding only result: {}", routingDataSources);
+
         RoutingResult result = new RoutingResult();
         for (String each : routingDataSources) {
             result.getTableUnits().getTableUnits().add(new TableUnit(each, "", ""));

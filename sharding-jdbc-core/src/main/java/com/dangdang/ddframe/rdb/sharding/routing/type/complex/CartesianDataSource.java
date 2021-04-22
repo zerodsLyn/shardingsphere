@@ -32,7 +32,10 @@ import java.util.List;
 @Getter
 @ToString
 public final class CartesianDataSource {
-    
+
+    /**
+     * 数据源
+     */
     private final String dataSource;
     
     private final List<CartesianTableReference> routingTableReferences;

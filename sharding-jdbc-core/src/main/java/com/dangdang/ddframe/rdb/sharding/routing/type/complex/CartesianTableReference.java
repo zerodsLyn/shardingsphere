@@ -33,6 +33,9 @@ import java.util.List;
 @Getter
 @ToString
 public final class CartesianTableReference {
-    
+
+    /**
+     * 表单元组
+     */
     private final List<TableUnit> tableUnits;
 }

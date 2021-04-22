@@ -57,6 +57,7 @@ public final class SimpleRoutingEngine implements RoutingEngine {
     
     @Override
     public RoutingResult route() {
+
         TableRule tableRule = shardingRule.getTableRule(logicTableName);
         Collection<String> routedDataSources = routeDataSources(tableRule);
         Collection<String> routedTables = routeTables(tableRule, routedDataSources);
@@ -104,7 +105,12 @@ public final class SimpleRoutingEngine implements RoutingEngine {
         }
         return result;
     }
-    
+
+    /**
+     * 通过sharding的列集合获取ShardingValue集合
+     * @param shardingColumns 需要sharding的列名称集合
+     * @return ShardingValue集合
+     */
     private List<ShardingValue<?>> getShardingValues(final Collection<String> shardingColumns) {
         List<ShardingValue<?>> result = new ArrayList<>(shardingColumns.size());
         for (String each : shardingColumns) {

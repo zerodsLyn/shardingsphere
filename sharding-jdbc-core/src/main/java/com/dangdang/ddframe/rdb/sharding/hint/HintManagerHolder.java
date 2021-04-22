@@ -85,7 +85,8 @@ public final class HintManagerHolder {
      * @return 是否数据库操作只路由至主库
      */
     public static boolean isMasterRouteOnly() {
-        return null != HINT_MANAGER_HOLDER.get() && HINT_MANAGER_HOLDER.get().isMasterRouteOnly();
+        return null != HINT_MANAGER_HOLDER.get()
+            && HINT_MANAGER_HOLDER.get().isMasterRouteOnly();
     }
     
     /**

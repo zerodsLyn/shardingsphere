@@ -39,9 +39,13 @@ import java.util.Map;
  */
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public final class HintManager implements AutoCloseable {
-    
+
+    /**
+     * 库分片值集合
+     */
     private final Map<ShardingKey, ShardingValue<?>> databaseShardingValues = new HashMap<>();
-    
+
+
     private final Map<ShardingKey, ShardingValue<?>> tableShardingValues = new HashMap<>();
     
     @Getter
@@ -97,9 +101,20 @@ public final class HintManager implements AutoCloseable {
      * @param operator 分片操作符
      * @param values 分片值
      */
-    public void addDatabaseShardingValue(final String logicTable, final String shardingColumn, final ShardingOperator operator, final Comparable<?>... values) {
+    public void addDatabaseShardingValue(
+            final String logicTable,
+            final String shardingColumn,
+            final ShardingOperator operator,
+            final Comparable<?>... values
+    ) {
         shardingHint = true;
-        databaseShardingValues.put(new ShardingKey(logicTable, shardingColumn), getShardingValue(logicTable, shardingColumn, operator, values));
+        databaseShardingValues.put(
+            new ShardingKey(
+                logicTable,
+                shardingColumn
+            ),
+            getShardingValue(logicTable, shardingColumn, operator, values)
+        );
     }
     
     /**

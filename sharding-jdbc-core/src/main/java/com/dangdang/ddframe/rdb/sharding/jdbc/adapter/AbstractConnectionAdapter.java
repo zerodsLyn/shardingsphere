@@ -33,13 +33,22 @@ import java.util.LinkedList;
  * @author zhangliang
  */
 public abstract class AbstractConnectionAdapter extends AbstractUnsupportedOperationConnection {
-    
+
+    /**
+     * 是否自动提交
+     */
     private boolean autoCommit = true;
-    
+
+    /**
+     * 只读
+     */
     private boolean readOnly = true;
     
     private boolean closed;
-    
+
+    /**
+     * 事务级别
+     */
     private int transactionIsolation = TRANSACTION_READ_UNCOMMITTED;
     
     protected abstract Collection<Connection> getConnections();
@@ -52,10 +61,13 @@ public abstract class AbstractConnectionAdapter extends AbstractUnsupportedOpera
     @Override
     public final void setAutoCommit(final boolean autoCommit) throws SQLException {
         this.autoCommit = autoCommit;
+        // 没有连接可用，先记录下调用
         if (getConnections().isEmpty()) {
             recordMethodInvocation(Connection.class, "setAutoCommit", new Class[] {boolean.class}, new Object[] {autoCommit});
             return;
         }
+
+        // 有连接再操作
         for (Connection each : getConnections()) {
             each.setAutoCommit(autoCommit);
         }

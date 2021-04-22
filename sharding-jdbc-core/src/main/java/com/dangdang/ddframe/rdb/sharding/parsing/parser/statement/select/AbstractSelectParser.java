@@ -146,7 +146,7 @@ public abstract class AbstractSelectParser implements SQLStatementParser {
             return;
         }
 
-        // 非*非聚合通用
+        // 非*, 非聚合通用
         StringBuilder expression = new StringBuilder();
         Token lastToken = null;
         while (!sqlParser.equalAny(DefaultKeyword.AS)

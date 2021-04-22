@@ -110,6 +110,7 @@ public final class ShardingRule {
      * @return 该逻辑表的分片规则
      */
     public Optional<TableRule> tryFindTableRule(final String logicTableName) {
+        // 根据逻辑表名称寻找TableRule
         for (TableRule each : tableRules) {
             if (each.getLogicTable().equalsIgnoreCase(logicTableName)) {
                 return Optional.of(each);
@@ -125,23 +126,32 @@ public final class ShardingRule {
      * @return 该逻辑表的分片规则
      */
     public TableRule getTableRule(final String logicTableName) {
+        // 尝试找TableRule
         Optional<TableRule> tableRule = tryFindTableRule(logicTableName);
         if (tableRule.isPresent()) {
             return tableRule.get();
         }
+
+        // 没找到，获取默认数据源，根据默认数据源创建TableRule
         if (dataSourceRule.getDefaultDataSource().isPresent()) {
             return createTableRuleWithDefaultDataSource(logicTableName, dataSourceRule);
         }
+
         throw new ShardingJdbcException("Cannot find table rule and default data source with logic table: '%s'", logicTableName);
     }
     
     private TableRule createTableRuleWithDefaultDataSource(final String logicTableName, final DataSourceRule defaultDataSourceRule) {
         Map<String, DataSource> defaultDataSourceMap = new HashMap<>(1);
-        defaultDataSourceMap.put(defaultDataSourceRule.getDefaultDataSourceName(), defaultDataSourceRule.getDefaultDataSource().get());
+        defaultDataSourceMap.put(
+            defaultDataSourceRule.getDefaultDataSourceName(),
+            defaultDataSourceRule.getDefaultDataSource().get()
+        );
+
         return TableRule.builder(logicTableName)
                 .dataSourceRule(new DataSourceRule(defaultDataSourceMap))
                 .databaseShardingStrategy(new DatabaseShardingStrategy("", new NoneDatabaseShardingAlgorithm()))
-                .tableShardingStrategy(new TableShardingStrategy("", new NoneTableShardingAlgorithm())).build();
+                .tableShardingStrategy(new TableShardingStrategy("", new NoneTableShardingAlgorithm()))
+                .build();
     }
     
     /**
@@ -193,6 +203,8 @@ public final class ShardingRule {
         if (logicTables.isEmpty()) {
             return Collections.emptyList();
         }
+
+
         Optional<BindingTableRule> bindingTableRule = findBindingTableRule(logicTables);
         if (!bindingTableRule.isPresent()) {
             return Collections.emptyList();
@@ -201,7 +213,11 @@ public final class ShardingRule {
         result.retainAll(logicTables);
         return result;
     }
-    
+
+    /**
+     * 获得包含任一在逻辑表名称集合的binding表配置的逻辑表名称集合
+     */
+
     private Optional<BindingTableRule> findBindingTableRule(final Collection<String> logicTables) {
         for (String each : logicTables) {
             Optional<BindingTableRule> result = findBindingTableRule(each);

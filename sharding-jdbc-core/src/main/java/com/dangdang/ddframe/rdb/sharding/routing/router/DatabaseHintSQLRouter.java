@@ -62,14 +62,21 @@ public final class DatabaseHintSQLRouter implements SQLRouter {
 
         // 路由
         RoutingResult routingResult = new DatabaseHintRoutingEngine(
+            // 直接使用shardingRule的数据源规则和库sharding策略
             shardingRule.getDataSourceRule(),
             shardingRule.getDatabaseShardingStrategy(),
             sqlStatement.getType()
         ).route();
 
 
+        // 创建执行基本单元
         for (TableUnit each : routingResult.getTableUnits().getTableUnits()) {
-            result.getExecutionUnits().add(new SQLExecutionUnit(each.getDataSourceName(), logicSQL));
+            result.getExecutionUnits().add(
+                new SQLExecutionUnit(
+                    each.getDataSourceName(),
+                    logicSQL
+                )
+            );
         }
 
         MetricsContext.stop(context);

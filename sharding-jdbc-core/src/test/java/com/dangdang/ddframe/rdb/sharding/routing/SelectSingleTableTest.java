@@ -32,7 +32,8 @@ public final class SelectSingleTableTest extends AbstractDynamicRouteSqlTest {
 
     @Test
     public void assertGroupBy() {
-        assertSingleTargetWithoutParameter("select sum(qty) from order where order_id = 1 group by tenant_id", "ds_1",
+        assertSingleTargetWithoutParameter("select sum(qty) from order where order_id = 1 group by tenant_id",
+            "ds_1",
                 "select sum(qty) , tenant_id AS GROUP_BY_DERIVED_0 from order_1 where order_id = 1 group by tenant_id ORDER BY GROUP_BY_DERIVED_0 ASC ");
 //        assertMultipleTargetsWithoutParameters("select sum(qty) from order group by tenant_id", 4, Arrays.asList("ds_0", "ds_1"),
 //                Arrays.asList("select sum(qty) , tenant_id as sharding_gen_1 from order_0 group by tenant_id", "select sum(qty) , tenant_id as sharding_gen_1 from order_1 group by tenant_id"));
@@ -69,13 +70,66 @@ public final class SelectSingleTableTest extends AbstractDynamicRouteSqlTest {
     public void assertSelectWithTableNameAsAlias() {
         assertSingleTargetWithoutParameter("select * from order where order.order_id = 10", "ds_0", "select * from order_0 where order_0.order_id = 10");
     }
+
+    @Test
+    public void assertSelectEquals() {
+        assertMultipleTargetsWithParameters(
+            "select * from order where order_id = 1",
+            Arrays.<Object>asList(1),
+            4,
+            Arrays.asList(
+                "ds_0",
+                "ds_1"
+            ),
+            Arrays.asList(
+                "select * from order_0 where order_id = 1",
+                "select * from order_1 where order_id = 1"
+            )
+        );
+    }
+
+    @Test
+    public void assertSelectWithInSingle() {
+        assertMultipleTargetsWithParameters(
+            "select * from order where order_id in (?,?,?)",
+            Arrays.<Object>asList(1, 2, 100),
+            4,
+            Arrays.asList(
+                "ds_0",
+                "ds_1"
+            ),
+            Arrays.asList(
+                "select * from order_0 where order_id in (?,?,?)",
+                "select * from order_1 where order_id in (?,?,?)"
+            )
+        );
+    }
     
     @Test
     public void assertSelectWithIn() {
-        assertMultipleTargetsWithParameters("select * from order where order_id in (?,?,?)", Arrays.<Object>asList(1, 2, 100), 4, 
-                Arrays.asList("ds_0", "ds_1"), Arrays.asList("select * from order_0 where order_id in (?,?,?)", "select * from order_1 where order_id in (?,?,?)"));
-        assertMultipleTargetsWithoutParameter(Collections.singletonList(new ShardingValuePair("order", ShardingOperator.IN, 1, 2, 100)), "select * from order", 4,
-                Arrays.asList("ds_0", "ds_1"), Arrays.asList("select * from order_0", "select * from order_1"));
+        assertMultipleTargetsWithParameters(
+            "select * from order where order_id in (?,?,?)",
+            Arrays.<Object>asList(1, 2, 100),
+            4,
+                Arrays.asList(
+                    "ds_0",
+                    "ds_1"
+                ),
+                Arrays.asList(
+                    "select * from order_0 where order_id in (?,?,?)",
+                    "select * from order_1 where order_id in (?,?,?)"
+                )
+        );
+        assertMultipleTargetsWithoutParameter(Collections.singletonList(
+            new ShardingValuePair(
+                "order",
+                ShardingOperator.IN,
+                1, 2, 100)
+            ),
+            "select * from order",
+            4,
+                Arrays.asList("ds_0", "ds_1"),
+            Arrays.asList("select * from order_0", "select * from order_1"));
     }
     
     @Test

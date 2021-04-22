@@ -69,6 +69,7 @@ public final class ParsingSQLRouter implements SQLRouter {
     
     @Override
     public SQLStatement parse(final String logicSQL, final int parametersSize) {
+
         // 获取SQL解析引擎，解析SQL语句
         SQLParsingEngine parsingEngine = new SQLParsingEngine(databaseType, logicSQL, shardingRule);
 
@@ -87,29 +88,46 @@ public final class ParsingSQLRouter implements SQLRouter {
     @Override
     public SQLRouteResult route(final String logicSQL, final List<Object> parameters, final SQLStatement sqlStatement) {
         final Context context = MetricsContext.start("Route SQL");
+
         SQLRouteResult result = new SQLRouteResult(sqlStatement);
         if (sqlStatement instanceof InsertStatement && null != ((InsertStatement) sqlStatement).getGeneratedKey()) {
             processGeneratedKey(parameters, (InsertStatement) sqlStatement, result);
         }
 
+        // 使用RoutingEngine进行路由
         RoutingResult routingResult = route(parameters, sqlStatement);
+
+        // 重写引擎，封装SQLRouteResult
         SQLRewriteEngine rewriteEngine = new SQLRewriteEngine(shardingRule, logicSQL, sqlStatement);
+
         boolean isSingleRouting = routingResult.isSingleRouting();
         if (sqlStatement instanceof SelectStatement && null != ((SelectStatement) sqlStatement).getLimit()) {
             processLimit(parameters, (SelectStatement) sqlStatement, isSingleRouting);
         }
+
         SQLBuilder sqlBuilder = rewriteEngine.rewrite(!isSingleRouting);
         if (routingResult instanceof CartesianRoutingResult) {
             for (CartesianDataSource cartesianDataSource : ((CartesianRoutingResult) routingResult).getRoutingDataSources()) {
                 for (CartesianTableReference cartesianTableReference : cartesianDataSource.getRoutingTableReferences()) {
-                    result.getExecutionUnits().add(new SQLExecutionUnit(cartesianDataSource.getDataSource(), rewriteEngine.generateSQL(cartesianTableReference, sqlBuilder)));
+                    result.getExecutionUnits().add(
+                        new SQLExecutionUnit(
+                            cartesianDataSource.getDataSource(),
+                            rewriteEngine.generateSQL(cartesianTableReference, sqlBuilder)
+                        )
+                    );
                 }
             }
         } else {
             for (TableUnit each : routingResult.getTableUnits().getTableUnits()) {
-                result.getExecutionUnits().add(new SQLExecutionUnit(each.getDataSourceName(), rewriteEngine.generateSQL(each, sqlBuilder)));
+                result.getExecutionUnits().add(
+                    new SQLExecutionUnit(
+                        each.getDataSourceName(),
+                        rewriteEngine.generateSQL(each, sqlBuilder)
+                    )
+                );
             }
         }
+
         MetricsContext.stop(context);
         if (showSQL) {
             SQLLogger.logSQL(logicSQL, sqlStatement, result.getExecutionUnits(), parameters);

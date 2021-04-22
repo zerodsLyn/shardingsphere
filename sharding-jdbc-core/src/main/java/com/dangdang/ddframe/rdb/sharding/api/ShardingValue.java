@@ -45,11 +45,20 @@ public final class ShardingValue<T extends Comparable<?>> {
     private final String logicTableName;
     
     private final String columnName;
-    
+
+    /**
+     * 单个值
+     */
     private final T value;
-    
+
+    /**
+     * 值集合
+     */
     private final Collection<T> values;
-    
+
+    /**
+     * 值range
+     */
     private final Range<T> valueRange;
     
     public ShardingValue(final String logicTableName, final String columnName, final T value) {

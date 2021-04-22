@@ -77,13 +77,19 @@ public final class PreparedStatementExecutor {
     public int executeUpdate() {
         Context context = MetricsContext.start("ShardingPreparedStatement-executeUpdate");
         try {
-            List<Integer> results = executorEngine.executePreparedStatement(sqlType, preparedStatementUnits, parameters, new ExecuteCallback<Integer>() {
-                
-                @Override
-                public Integer execute(final BaseStatementUnit baseStatementUnit) throws Exception {
-                    return ((PreparedStatement) baseStatementUnit.getStatement()).executeUpdate();
+            List<Integer> results = executorEngine.executePreparedStatement(
+                sqlType,
+                preparedStatementUnits,
+                parameters,
+                new ExecuteCallback<Integer>() {
+                    @Override
+                    public Integer execute(final BaseStatementUnit baseStatementUnit) throws Exception {
+                        // 调用 PreparedStatement#executeUpdate()
+                        return ((PreparedStatement) baseStatementUnit.getStatement()).executeUpdate();
+                    }
                 }
-            });
+            );
+
             return accumulate(results);
         } finally {
             MetricsContext.stop(context);

@@ -32,8 +32,14 @@ import lombok.ToString;
 @EqualsAndHashCode
 @ToString
 public final class SQLExecutionUnit {
-    
+
+    /**
+     * 数据源
+     */
     private final String dataSource;
-    
+
+    /**
+     * 原始sql
+     */
     private final String sql;
 }
