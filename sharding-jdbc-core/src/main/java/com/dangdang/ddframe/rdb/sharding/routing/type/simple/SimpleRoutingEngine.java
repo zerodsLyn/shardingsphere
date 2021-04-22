@@ -57,13 +57,24 @@ public final class SimpleRoutingEngine implements RoutingEngine {
     
     @Override
     public RoutingResult route() {
-
+        // 1.获取
         TableRule tableRule = shardingRule.getTableRule(logicTableName);
+
+        // 2.路由数据源
         Collection<String> routedDataSources = routeDataSources(tableRule);
+
+        // 3.路由表
         Collection<String> routedTables = routeTables(tableRule, routedDataSources);
+
+        // 4.构造RoutingResult
         return generateRoutingResult(tableRule, routedDataSources, routedTables);
     }
-    
+
+    /**
+     * 根据TableRule路由数据源
+     * @param tableRule tableRule
+     * @return 数据源信息
+     */
     private Collection<String> routeDataSources(final TableRule tableRule) {
         DatabaseShardingStrategy strategy = shardingRule.getDatabaseShardingStrategy(tableRule);
         List<ShardingValue<?>> shardingValues = HintManagerHolder.isUseShardingHint()
@@ -73,13 +84,24 @@ public final class SimpleRoutingEngine implements RoutingEngine {
         Preconditions.checkState(!result.isEmpty(), "no database route info");
         return result;
     }
-    
+
+    /**
+     * 路由表
+     * @param tableRule tableRule
+     * @param routedDataSources 路由的数据源
+     * @return 表分片集合
+     */
     private Collection<String> routeTables(final TableRule tableRule, final Collection<String> routedDataSources) {
         TableShardingStrategy strategy = shardingRule.getTableShardingStrategy(tableRule);
-        List<ShardingValue<?>> shardingValues = HintManagerHolder.isUseShardingHint() ? getTableShardingValuesFromHint(strategy.getShardingColumns())
+
+        List<ShardingValue<?>> shardingValues = HintManagerHolder.isUseShardingHint()
+                ? getTableShardingValuesFromHint(strategy.getShardingColumns())
                 : getShardingValues(strategy.getShardingColumns());
-        Collection<String> result = tableRule.isDynamic() ? strategy.doDynamicSharding(shardingValues)
+
+        Collection<String> result = tableRule.isDynamic()
+                ? strategy.doDynamicSharding(shardingValues)
                 : strategy.doStaticSharding(sqlStatement.getType(), tableRule.getActualTableNames(routedDataSources), shardingValues);
+
         Preconditions.checkState(!result.isEmpty(), "no table route info");
         return result;
     }
@@ -97,12 +119,17 @@ public final class SimpleRoutingEngine implements RoutingEngine {
     
     private List<ShardingValue<?>> getTableShardingValuesFromHint(final Collection<String> shardingColumns) {
         List<ShardingValue<?>> result = new ArrayList<>(shardingColumns.size());
+
         for (String each : shardingColumns) {
-            Optional<ShardingValue<?>> shardingValue = HintManagerHolder.getTableShardingValue(new ShardingKey(logicTableName, each));
+            Optional<ShardingValue<?>> shardingValue = HintManagerHolder.getTableShardingValue(
+                new ShardingKey(logicTableName, each)
+            );
+
             if (shardingValue.isPresent()) {
                 result.add(shardingValue.get());
             }
         }
+
         return result;
     }
 
@@ -121,11 +148,20 @@ public final class SimpleRoutingEngine implements RoutingEngine {
         }
         return result;
     }
-    
+
+    /**
+     * 构造RoutingResult
+     * @param tableRule TableRule
+     * @param routedDataSources 路由到的数据源
+     * @param routedTables 路由到的表分片
+     * @return RoutingResult
+     */
     private RoutingResult generateRoutingResult(final TableRule tableRule, final Collection<String> routedDataSources, final Collection<String> routedTables) {
         RoutingResult result = new RoutingResult();
         for (DataNode each : tableRule.getActualDataNodes(routedDataSources, routedTables)) {
-            result.getTableUnits().getTableUnits().add(new TableUnit(each.getDataSourceName(), logicTableName, each.getTableName()));
+            result.getTableUnits().getTableUnits().add(
+                new TableUnit(each.getDataSourceName(), logicTableName, each.getTableName())
+            );
         }
         return result;
     }

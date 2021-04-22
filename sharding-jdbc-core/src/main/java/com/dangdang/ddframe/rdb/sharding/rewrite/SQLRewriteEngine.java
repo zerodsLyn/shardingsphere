@@ -71,14 +71,19 @@ public final class SQLRewriteEngine {
      */
     public SQLBuilder rewrite(final boolean isRewriteLimit) {
         SQLBuilder result = new SQLBuilder();
+
         if (sqlTokens.isEmpty()) {
             result.appendLiterals(originalSQL);
             return result;
         }
         int count = 0;
+
+        // 排序SQLToken，按照 beginPosition 递增
         sortByBeginPosition();
+
         for (SQLToken each : sqlTokens) {
             if (0 == count) {
+                // 拼接第一个 SQLToken 前的字符串
                 result.appendLiterals(originalSQL.substring(0, each.getBeginPosition()));
             }
             if (each instanceof TableToken) {
@@ -94,6 +99,7 @@ public final class SQLRewriteEngine {
             }
             count++;
         }
+
         return result;
     }
     
@@ -106,12 +112,26 @@ public final class SQLRewriteEngine {
             }
         });
     }
-    
+
+    /**
+     * 拼接 TableToken
+     *
+     * @param sqlBuilder SQL构建器
+     * @param tableToken tableToken
+     * @param count tableToken 在 sqlTokens 的顺序
+     * @param sqlTokens sqlTokens
+     */
     private void appendTableToken(final SQLBuilder sqlBuilder, final TableToken tableToken, final int count, final List<SQLToken> sqlTokens) {
-        String tableName = sqlStatement.getTables().getTableNames().contains(tableToken.getTableName()) ? tableToken.getTableName() : tableToken.getOriginalLiterals();
+        // 拼接 TableToken
+        String tableName = sqlStatement.getTables().getTableNames().contains(tableToken.getTableName())
+            ? tableToken.getTableName()
+            : tableToken.getOriginalLiterals();
         sqlBuilder.appendTable(tableName);
+
+        // 拼接 SQLToken 后面的字符串
         int beginPosition = tableToken.getBeginPosition() + tableToken.getOriginalLiterals().length();
         int endPosition = sqlTokens.size() - 1 == count ? originalSQL.length() : sqlTokens.get(count + 1).getBeginPosition();
+
         sqlBuilder.appendLiterals(originalSQL.substring(beginPosition, endPosition));
     }
     
@@ -120,8 +140,10 @@ public final class SQLRewriteEngine {
             sqlBuilder.appendLiterals(", ");
             sqlBuilder.appendLiterals(item);
         }
+
         int beginPosition = itemsToken.getBeginPosition();
         int endPosition = sqlTokens.size() - 1 == count ? originalSQL.length() : sqlTokens.get(count + 1).getBeginPosition();
+
         sqlBuilder.appendLiterals(originalSQL.substring(beginPosition, endPosition));
     }
     

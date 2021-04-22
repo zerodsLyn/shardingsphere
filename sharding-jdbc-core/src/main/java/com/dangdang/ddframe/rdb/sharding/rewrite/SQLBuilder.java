@@ -32,9 +32,15 @@ import java.util.Map;
  */
 @RequiredArgsConstructor(access = AccessLevel.PRIVATE)
 public final class SQLBuilder {
-    
+
+    /**
+     * 段集合
+     */
     private final List<Object> segments;
-    
+
+    /**
+     * 当前段
+     */
     private StringBuilder currentSegment;
     
     public SQLBuilder() {

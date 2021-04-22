@@ -38,4 +38,8 @@ public class SQLUtil {
     public static String getExactlyValue(final String value) {
         return null == value ? null : CharMatcher.anyOf("[]`'\"").removeFrom(value);
     }
+
+    public static void main(String[] args) {
+        System.out.println(getExactlyValue("`h`"));
+    }
 }

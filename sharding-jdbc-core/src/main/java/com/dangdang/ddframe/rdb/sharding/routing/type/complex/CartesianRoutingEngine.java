@@ -50,15 +50,22 @@ public final class CartesianRoutingEngine implements RoutingEngine {
     @Override
     public CartesianRoutingResult route() {
         CartesianRoutingResult result = new CartesianRoutingResult();
+        // Entry<数据源（库）, Set<逻辑表>> entry
         for (Entry<String, Set<String>> entry : getDataSourceLogicTablesMap().entrySet()) {
+            // 获得当前数据源（库）的 路由表单元分组
             List<Set<String>> actualTableGroups = getActualTableGroups(entry.getKey(), entry.getValue());
             List<Set<TableUnit>> tableUnitGroups = toTableUnitGroups(entry.getKey(), actualTableGroups);
+
+            // 笛卡尔积，并合并结果
             result.merge(entry.getKey(), getCartesianTableReferences(Sets.cartesianProduct(tableUnitGroups)));
         }
         log.trace("cartesian tables sharding result: {}", result);
         return result;
     }
-    
+
+    /**
+     * 获得同库对应的逻辑表集合
+     */
     private Map<String, Set<String>> getDataSourceLogicTablesMap() {
         Collection<String> intersectionDataSources = getIntersectionDataSources();
         Map<String, Set<String>> result = new HashMap<>(routingResults.size());
@@ -73,13 +80,17 @@ public final class CartesianRoutingEngine implements RoutingEngine {
         }
         return result;
     }
-    
+
+    /**
+     * 获得所有路由结果里的数据源（库）交集
+     */
     private Collection<String> getIntersectionDataSources() {
         Collection<String> result = new HashSet<>();
         for (RoutingResult each : routingResults) {
             if (result.isEmpty()) {
                 result.addAll(each.getTableUnits().getDataSourceNames());
             }
+            // 交集
             result.retainAll(each.getTableUnits().getDataSourceNames());
         }
         return result;

@@ -46,7 +46,9 @@ public final class TableRule {
      */
     private final String logicTable;
 
-
+    /**
+     * 动态路由还是静态路由
+     */
     private final boolean dynamic;
     
     private final List<DataNode> actualTables;
@@ -162,7 +164,9 @@ public final class TableRule {
      * @return 真实数据单元
      */
     public Collection<DataNode> getActualDataNodes(final Collection<String> targetDataSources, final Collection<String> targetTables) {
-        return dynamic ? getDynamicDataNodes(targetDataSources, targetTables) : getStaticDataNodes(targetDataSources, targetTables);
+        return dynamic
+            ? getDynamicDataNodes(targetDataSources, targetTables)
+            : getStaticDataNodes(targetDataSources, targetTables);
     }
     
     private Collection<DataNode> getDynamicDataNodes(final Collection<String> targetDataSources, final Collection<String> targetTables) {

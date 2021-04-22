@@ -90,6 +90,8 @@ public final class ParsingSQLRouter implements SQLRouter {
         final Context context = MetricsContext.start("Route SQL");
 
         SQLRouteResult result = new SQLRouteResult(sqlStatement);
+
+        // 处理 插入SQL 主键字段
         if (sqlStatement instanceof InsertStatement && null != ((InsertStatement) sqlStatement).getGeneratedKey()) {
             processGeneratedKey(parameters, (InsertStatement) sqlStatement, result);
         }
@@ -100,12 +102,16 @@ public final class ParsingSQLRouter implements SQLRouter {
         // 重写引擎，封装SQLRouteResult
         SQLRewriteEngine rewriteEngine = new SQLRewriteEngine(shardingRule, logicSQL, sqlStatement);
 
+        // 处理分页
         boolean isSingleRouting = routingResult.isSingleRouting();
         if (sqlStatement instanceof SelectStatement && null != ((SelectStatement) sqlStatement).getLimit()) {
             processLimit(parameters, (SelectStatement) sqlStatement, isSingleRouting);
         }
 
+        // 重写
         SQLBuilder sqlBuilder = rewriteEngine.rewrite(!isSingleRouting);
+
+        // 生成ExecutionUnit
         if (routingResult instanceof CartesianRoutingResult) {
             for (CartesianDataSource cartesianDataSource : ((CartesianRoutingResult) routingResult).getRoutingDataSources()) {
                 for (CartesianTableReference cartesianTableReference : cartesianDataSource.getRoutingTableReferences()) {
