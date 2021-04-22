@@ -74,12 +74,30 @@ public final class RdbTransactionLogStorage implements TransactionLogStorage {
             throw new TransactionLogStorageException(ex);
         }
     }
-    
+
+    /**
+     * 读取需要处理的事务日志.
+     *
+     * <p>需要处理的事务日志为: </p>
+     * <p>1. 异步处理次数小于最大处理次数.</p>
+     * <p>2. 异步处理的事务日志早于异步处理的间隔时间.</p>
+     *
+     * @param size 获取日志的数量
+     * @param maxDeliveryTryTimes 事务送达的最大尝试次数
+     * @param maxDeliveryTryDelayMillis 执行送达事务的延迟毫秒数.
+     */
     @Override
-    public List<TransactionLog> findEligibleTransactionLogs(final int size, final int maxDeliveryTryTimes, final long maxDeliveryTryDelayMillis) {
+    public List<TransactionLog> findEligibleTransactionLogs(final int size,
+            final int maxDeliveryTryTimes,
+            final long maxDeliveryTryDelayMillis
+    ) {
         List<TransactionLog> result = new ArrayList<>(size);
-        String sql = "SELECT `id`, `transaction_type`, `data_source`, `sql`, `parameters`, `creation_time`, `async_delivery_try_times` "
-            + "FROM `transaction_log` WHERE `async_delivery_try_times`<? AND `transaction_type`=? AND `creation_time`<? LIMIT ?;";
+        String sql = "SELECT "
+            + "`id`, `transaction_type`, `data_source`, `sql`, `parameters`, `creation_time`, `async_delivery_try_times` "
+            + "FROM `transaction_log`"
+            + "WHERE `async_delivery_try_times`<? "
+            + "AND `transaction_type`=? "
+            + "AND `creation_time`<? LIMIT ?;";
         try (Connection conn = dataSource.getConnection()) {
             try (PreparedStatement preparedStatement = conn.prepareStatement(sql)) {
                 preparedStatement.setInt(1, maxDeliveryTryTimes);
@@ -115,12 +133,16 @@ public final class RdbTransactionLogStorage implements TransactionLogStorage {
     }
     
     @Override
-    public boolean processData(final Connection connection, final TransactionLog transactionLog, final int maxDeliveryTryTimes) {
+    public boolean processData(final Connection connection,
+            final TransactionLog transactionLog,
+            final int maxDeliveryTryTimes
+    ) {
         try (
             Connection conn = connection;
             PreparedStatement preparedStatement = conn.prepareStatement(transactionLog.getSql())) {
             for (int parameterIndex = 0; parameterIndex < transactionLog.getParameters().size(); parameterIndex++) {
-                preparedStatement.setObject(parameterIndex + 1, transactionLog.getParameters().get(parameterIndex));
+                preparedStatement.setObject(parameterIndex + 1,
+                    transactionLog.getParameters().get(parameterIndex));
             }
             preparedStatement.executeUpdate();
         } catch (final SQLException ex) {

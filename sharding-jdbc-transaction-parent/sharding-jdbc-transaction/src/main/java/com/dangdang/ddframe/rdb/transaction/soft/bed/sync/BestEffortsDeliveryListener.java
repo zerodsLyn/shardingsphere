@@ -51,17 +51,22 @@ public final class BestEffortsDeliveryListener {
             return;
         }
         SoftTransactionConfiguration transactionConfig = SoftTransactionManager.getCurrentTransactionConfiguration().get();
-        TransactionLogStorage transactionLogStorage = TransactionLogStorageFactory.createTransactionLogStorage(transactionConfig.buildTransactionLogDataSource());
+        TransactionLogStorage transactionLogStorage = TransactionLogStorageFactory.createTransactionLogStorage(
+                transactionConfig.buildTransactionLogDataSource());
         BEDSoftTransaction bedSoftTransaction = (BEDSoftTransaction) SoftTransactionManager.getCurrentTransaction().get();
+
         switch (event.getEventExecutionType()) {
+            // 执行前，插入事务日志
             case BEFORE_EXECUTE:
                 //TODO 对于批量执行的SQL需要解析成两层列表
                 transactionLogStorage.add(new TransactionLog(event.getId(), bedSoftTransaction.getTransactionId(), bedSoftTransaction.getTransactionType(), 
                         event.getDataSource(), event.getSql(), event.getParameters(), System.currentTimeMillis(), 0));
                 return;
+            // 执行成功，移除事务日志
             case EXECUTE_SUCCESS: 
                 transactionLogStorage.remove(event.getId());
                 return;
+            // 执行失败，同步重试
             case EXECUTE_FAILURE: 
                 boolean deliverySuccess = false;
                 for (int i = 0; i < transactionConfig.getSyncMaxDeliveryTryTimes(); i++) {
@@ -72,19 +77,26 @@ public final class BestEffortsDeliveryListener {
                     Connection conn = null;
                     PreparedStatement preparedStatement = null;
                     try {
+                        // 获得数据库连接
                         conn = bedSoftTransaction.getConnection().getConnection(event.getDataSource(), SQLType.UPDATE);
+                        // 因为可能执行失败是数据库连接异常，所以判断一次，如果无效，重新获取数据库连接
                         if (!isValidConnection(conn)) {
                             bedSoftTransaction.getConnection().release(conn);
                             conn = bedSoftTransaction.getConnection().getConnection(event.getDataSource(), SQLType.UPDATE);
                             isNewConnection = true;
                         }
+
+                        // 同步重试
                         preparedStatement = conn.prepareStatement(event.getSql());
                         //TODO 对于批量事件需要解析成两层列表
                         for (int parameterIndex = 0; parameterIndex < event.getParameters().size(); parameterIndex++) {
                             preparedStatement.setObject(parameterIndex + 1, event.getParameters().get(parameterIndex));
                         }
+
                         preparedStatement.executeUpdate();
                         deliverySuccess = true;
+
+                        // 同步重试成功，移除事务日志
                         transactionLogStorage.remove(event.getId());
                     } catch (final SQLException ex) {
                         log.error(String.format("Delivery times %s error, max try times is %s", i + 1, transactionConfig.getSyncMaxDeliveryTryTimes()), ex);

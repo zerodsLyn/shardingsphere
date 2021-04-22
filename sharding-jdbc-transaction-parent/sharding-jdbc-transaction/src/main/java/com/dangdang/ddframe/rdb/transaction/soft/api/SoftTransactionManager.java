@@ -44,8 +44,14 @@ import java.sql.SQLException;
 @RequiredArgsConstructor
 public final class SoftTransactionManager {
 
+    /**
+     * {@link ExecutorDataMap#dataMap} 柔性事务对象 key
+     */
     private static final String TRANSACTION = "transaction";
 
+    /**
+     * {@link ExecutorDataMap#dataMap} 柔性事务配置 key
+     */
     private static final String TRANSACTION_CONFIG = "transactionConfig";
 
     @Getter
@@ -55,11 +61,17 @@ public final class SoftTransactionManager {
      * 初始化事务管理器.
      */
     public void init() throws SQLException {
+        // 初始化 最大努力送达型事务监听器 注册到总线上
         EventBusInstance.getInstance().register(new BestEffortsDeliveryListener());
+
+        // 初始化 事务日志数据库存储表
+        // 如果使用数据库存储事务日志，需要创建一个事务日志表
         if (TransactionLogDataSourceType.RDB == transactionConfig.getStorageType()) {
             Preconditions.checkNotNull(transactionConfig.getTransactionLogDataSource());
             createTable();
         }
+
+        // 初始化 内嵌的最大努力送达型异步作业
         if (transactionConfig.getBestEffortsDeliveryJobConfiguration().isPresent()) {
             new NestedBestEffortsDeliveryJobFactory(transactionConfig).init();
         }
@@ -100,6 +112,7 @@ public final class SoftTransactionManager {
             default: 
                 throw new UnsupportedOperationException(type.toString());
         }
+
         // TODO 目前使用不支持嵌套事务，以后这里需要可配置
         if (getCurrentTransaction().isPresent()) {
             throw new UnsupportedOperationException("Cannot support nested transaction.");

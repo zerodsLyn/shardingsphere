@@ -33,15 +33,27 @@ import java.util.UUID;
  * @author zhangliang 
  */
 public abstract class AbstractSoftTransaction {
-    
+
+    /**
+     * 分片连接原自动提交状态
+     */
     private boolean previousAutoCommit;
-    
+
+    /**
+     * 分片连接
+     */
     @Getter
     private ShardingConnection connection;
-    
+
+    /**
+     * 事务类型
+     */
     @Getter
     private SoftTransactionType transactionType;
-    
+
+    /**
+     * 事务编号
+     */
     @Getter
     private String transactionId;
     
@@ -51,8 +63,12 @@ public abstract class AbstractSoftTransaction {
         ExecutorExceptionHandler.setExceptionThrown(false);
         connection = (ShardingConnection) conn;
         transactionType = type;
+
+        // 设置自动提交状态 使用最大努力型事务时，上层业务执行 SQL 会马上提交
         previousAutoCommit = connection.getAutoCommit();
         connection.setAutoCommit(true);
+
+        // 生成事务编号
         // TODO 替换UUID为更有效率的id生成器
         transactionId = UUID.randomUUID().toString();
     }

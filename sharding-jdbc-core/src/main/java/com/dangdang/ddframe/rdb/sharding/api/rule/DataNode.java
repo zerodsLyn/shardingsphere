@@ -28,6 +28,7 @@ import java.util.List;
 /**
  * 分库分表数据单元.
  * 静态分库分表数据单元 = 数据源名称 + 表名称
+ * 例如ds_0.t_order_0
  * 
  * @author zhangliang
  */
@@ -38,9 +39,15 @@ import java.util.List;
 public class DataNode {
     
     private static final String DELIMITER = ".";
-    
+
+    /**
+     * 数据源名称
+     */
     private final String dataSourceName;
-    
+
+    /**
+     * 表名称
+     */
     private final String tableName;
     
     public DataNode(final String dataNode) {
@@ -51,7 +58,7 @@ public class DataNode {
     
     /**
      * 判断字符串是否为合法的分库分表数据单元字符串.
-     * 
+     * SoftTransactionManager
      * @param dataNodeStr 待判断的字符串
      * @return 是否为合法的分库分表数据单元字符串
      */
